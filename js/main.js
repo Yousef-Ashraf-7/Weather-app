@@ -1,38 +1,37 @@
-
 const geoUrl = "https://geocoding-api.open-meteo.com/v1/search?count=1&name=";
 const weatherUrl = "https://api.open-meteo.com/v1/forecast?current=temperature_2m,relative_humidity_2m,wind_speed_10m,weather_code";
 
-const searchInput = document.querySelector(".search-box input")
-const SearchBtn = document.getElementById("search");
+const searchInput = document.querySelector(".search-box input");
+const searchBtn = document.getElementById("search");
 const weatherIcon = document.querySelector(".weather-icon");
 
 async function checkWeather(city) {
+    if (city === "") {
+        alert("Please enter a city name");
+        return;
+    }
+
     try {
-        // الطلب الأول: نجيب إحداثيات المدينة
-        const geoResponse = await fetch(geoUrl + city);
+        const geoResponse = await fetch(geoUrl + encodeURIComponent(city));
         const geoData = await geoResponse.json();
 
-        // لو مفيش نتايج يبقى المدينة مش موجودة
         if (!geoData.results) {
-            alert("city is not found");
+            alert("City not found");
             return;
         }
 
         const place = geoData.results[0];
 
-        // الطلب التاني: نجيب الطقس بالإحداثيات
         const weatherResponse = await fetch(
             weatherUrl + "&latitude=" + place.latitude + "&longitude=" + place.longitude
         );
         const data = await weatherResponse.json();
 
-        // عرض البيانات
         document.querySelector(".city").innerHTML = place.name;
         document.querySelector(".temp").innerHTML = Math.round(data.current.temperature_2m) + "°C";
         document.querySelector(".humidity").innerHTML = data.current.relative_humidity_2m + "%";
         document.querySelector(".wind").innerHTML = data.current.wind_speed_10m + " km/h";
 
-        // اختيار الصورة حسب كود الطقس
         const code = data.current.weather_code;
 
         if (code === 0) {
@@ -52,10 +51,19 @@ async function checkWeather(city) {
         }
 
     } catch (error) {
-        console.log("حصل خطأ:", error);
+        console.log("Error:", error);
+        alert("Something went wrong, please check your connection");
     }
 }
 
-SearchBtn.addEventListener("click", () => {
+searchBtn.addEventListener("click", () => {
     checkWeather(searchInput.value.trim());
 });
+
+searchInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        checkWeather(searchInput.value.trim());
+    }
+});
+
+checkWeather("Cairo");
